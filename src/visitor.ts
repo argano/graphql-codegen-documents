@@ -14,7 +14,7 @@ interface NodeFieldType {
 }
 
 interface OperationInput {
-  names: string[];
+  nameParts: string[];
   type: NodeFieldType;
 }
 
@@ -110,7 +110,7 @@ export class DocsGenVisitor {
     if (inputs.length) {
       inputString = (() => {
         const inputsString = inputs.map(input => {
-          return ['$' + this.getCamelCase(input.names), formatType(input.type)].join(': ');
+          return ['$' + this.getCamelCase(input.nameParts), formatType(input.type)].join(': ');
         }).join(', ');
         return '(' + inputsString + ')';
       })();
@@ -141,9 +141,9 @@ export class DocsGenVisitor {
     indentCounter++;
     const fieldInputsString = field.inputs.length ? this.formatInputStringForResolver(field.inputs.map(input => input.name.value), newParentNames) : '';
     const subFields = this.typeDefsMap[field.type];
-    const operationInputs = field.inputs.map(input => {
+    const operationInputs = field.inputs.map((input): OperationInput => {
       return {
-        names: [...newParentNames, input.name.value],
+        nameParts: [...newParentNames, input.name.value],
         type: this.parseType(input.type)
       };
     });
