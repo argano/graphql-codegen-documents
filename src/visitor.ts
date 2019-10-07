@@ -13,6 +13,11 @@ interface NodeFieldType {
   isScalar: boolean;
 }
 
+interface OperationInput {
+  names: string[];
+  type: NodeFieldType;
+}
+
 interface FieldType {
   name: string;
   type?: string;
@@ -72,16 +77,7 @@ export class DocsGenVisitor {
     const generate = (operations: any, operationType: string) => {
       const results = operations.map(operation => {
         const { codes, operationInputs } = this.formatFieldsAndGetInputs(operation);
-        const inputsMap: { [name: string]: InputValueDefinitionNode } = {};
-        operationInputs.forEach(input => {
-          if (inputsMap[input.name.value]) {
-            return;
-          } else {
-            inputsMap[input.name.value] = input;
-          }
-        });
-        const uniqueInputs = Object.values(inputsMap);
-        const argsString = this.formatInputStringForOperation(uniqueInputs);
+        const argsString = this.formatInputStringForOperation(operationInputs);
         return this.wrapBlock(operationType, operation.name, argsString, codes);
       });
       return results.join('\n\n');
@@ -94,7 +90,7 @@ export class DocsGenVisitor {
     return generatedCode.join('\n\n\n');
   }
 
-  private formatInputStringForOperation(inputs: InputValueDefinitionNode[]): string {
+  private formatInputStringForOperation(inputs: OperationInput[]): string {
     let inputString = '';
     const formatType = (nodeType: NodeFieldType): string => {
       let typeValue = nodeType.type;
@@ -114,8 +110,7 @@ export class DocsGenVisitor {
     if (inputs.length) {
       inputString = (() => {
         const inputsString = inputs.map(input => {
-          const parsedType = this.parseType(input.type);
-          return ['$' + input.name.value, formatType(parsedType)].join(': ');
+          return ['$' + this.getCamelCase(input.names), formatType(input.type)].join(': ');
         }).join(', ');
         return '(' + inputsString + ')';
       })();
@@ -123,31 +118,44 @@ export class DocsGenVisitor {
     return inputString;
   }
 
-  private formatInputStringForResolver(inputs: InputValueDefinitionNode[]): string {
-    const argumentsString = inputs.map(input => {
-      return [input.name.value, '$' + input.name.value].join(': ');
+  private formatInputStringForResolver(names: string[], inputs: string[]): string {
+    const argumentsString = names.map(name => {
+      return [name, '$' + this.getCamelCase([...inputs, name])].join(': ');
     }).join(', ');
     return '(' + argumentsString + ')';
   }
 
-  private formatFieldsAndGetInputs(field: FieldType, indentCounter = 0, parentTypes: { [type: string]: number } = {}): { codes: string, operationInputs: InputValueDefinitionNode[] } {
+  private formatFieldsAndGetInputs(
+    field: FieldType,
+    indentCounter = 0,
+    parentTypes: { [type: string]: number } = {},
+    parentNames: string[]|null = null
+  ): { codes: string, operationInputs: OperationInput[] } {
     const recurCounter = parentTypes[field.type] || 0;
     const isOverRecursionLimit = recurCounter > this.recursionLimit;
     if (isOverRecursionLimit) {
       return { codes: '', operationInputs: [] };
     }
     const newParentTypes = { ...parentTypes, [field.type]: recurCounter + 1 };
+    const newParentNames = parentNames ? [...parentNames, field.name] : [];
     indentCounter++;
-    const fieldInputsString = field.inputs.length ? this.formatInputStringForResolver(field.inputs) : '';
+    const fieldInputsString = field.inputs.length ? this.formatInputStringForResolver(field.inputs.map(input => input.name.value), newParentNames) : '';
     const subFields = this.typeDefsMap[field.type];
+    const operationInputs = field.inputs.map(input => {
+      return {
+        names: [...newParentNames, input.name.value],
+        type: this.parseType(input.type)
+      };
+    });
     if (!subFields) {
-      return { codes: `${TAB.repeat(indentCounter)}${field.name}${fieldInputsString}\n`, operationInputs: field.inputs };
+      return { codes: `${TAB.repeat(indentCounter)}${field.name}${fieldInputsString}\n`, operationInputs };
     }
-    const results = subFields.map(subField => this.formatFieldsAndGetInputs(subField, indentCounter, newParentTypes));
+
+    const results = subFields.map(subField => this.formatFieldsAndGetInputs(subField, indentCounter, newParentTypes, newParentNames));
     const innerCode = results.map(r => r.codes).join('');
     const codes = `${TAB.repeat(indentCounter)}${field.name}${fieldInputsString} {\n${innerCode}${TAB.repeat(indentCounter)}}\n`;
     const subFieldInputs = results.map(r => r.operationInputs).reduce((prev, curr) => prev.concat(curr));
-    return { codes, operationInputs: [...field.inputs, ...subFieldInputs] };
+    return { codes, operationInputs: [...operationInputs, ...subFieldInputs] };
   }
 
   private wrapBlock(operationType: string, operationName: string, args: string, code: string): string {
@@ -195,5 +203,9 @@ export class DocsGenVisitor {
         }
       });
     });
+  }
+
+  private getCamelCase(arr: string[]): string {
+    return [arr[0], ...arr.slice(1).map(str => str.charAt(0).toUpperCase() + str.substring(1))].join('');
   }
 }
