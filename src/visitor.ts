@@ -1,6 +1,6 @@
 import { buildScalars, LoadedFragment, ParsedScalarsMap } from '@graphql-codegen/visitor-plugin-common';
 import * as autobind from 'auto-bind';
-import { FieldDefinitionNode, GraphQLSchema, InputValueDefinitionNode, ObjectTypeDefinitionNode, TypeNode, NamedTypeNode, InterfaceTypeDefinitionNode, subscribe, OperationTypeDefinitionNode } from 'graphql';
+import { FieldDefinitionNode, GraphQLSchema, InputValueDefinitionNode, InterfaceTypeDefinitionNode, ObjectTypeDefinitionNode, TypeNode } from 'graphql';
 import { DocsGenPluginConfig } from '.';
 
 const TAB = '  ';
