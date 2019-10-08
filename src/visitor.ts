@@ -82,7 +82,7 @@ export class DocumentsGeneratorVisitor {
     const docsSettings:  {key: string; operationType: OperationType}[] = [
       { key: 'Query', operationType: 'query' },
       { key: 'Mutation', operationType: 'mutation' },
-      { key: 'subscription', operationType: 'subscription' }
+      { key: 'Subscription', operationType: 'subscription' }
     ];
     const generate = (operations: FieldType[], operationType: OperationType) => {
       const filteredOperations = (() => {
