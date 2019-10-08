@@ -1,9 +1,10 @@
 import { PluginFunction, Types } from '@graphql-codegen/plugin-helpers';
 import { RawTypesConfig } from '@graphql-codegen/visitor-plugin-common';
-import { GraphQLSchema, parse, printSchema, visit } from 'graphql';
-import { DocsGenVisitor } from './visitor';
+import { GraphQLSchema, parse, printSchema, visit, concatAST } from 'graphql';
+import { DocumentsGeneratorVisitor } from './visitor';
+import { OperationsVisitor } from './operations-visitor';
 export * from './visitor';
-export { DocsGenVisitor };
+export { DocumentsGeneratorVisitor };
 
 export interface DocsGenPluginConfig extends RawTypesConfig {
   /**
@@ -27,9 +28,16 @@ export interface DocsGenPluginConfig extends RawTypesConfig {
 }
 
 export const plugin: PluginFunction<DocsGenPluginConfig> = (schema: GraphQLSchema, documents: Types.DocumentFile[], config: DocsGenPluginConfig) => {
+  const docAstNode = concatAST(
+    documents.reduce((prev, v) => {
+      return [...prev, v.content];
+    }, [])
+  );
   const printedSchema = printSchema(schema);
   const astNode = parse(printedSchema);
-  const visitor = new DocsGenVisitor(schema, [], config, documents);
+  const visitor = new DocumentsGeneratorVisitor(schema, [], config, documents);
+  const docVisitor = new OperationsVisitor(schema, [], config, documents);
   visit(astNode, { leave: visitor });
-  return visitor.generateDocuments();
+  visit(docAstNode, {leave: docVisitor});
+  return visitor.generateDocuments(docVisitor.getOperationNames());
 };
