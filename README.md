@@ -8,17 +8,7 @@ GraphQL Code Generator plugin for generating documents.
 
 
 ### Usage
-```yml
-generates:
-path/to/docs_file.graphql:
- plugins:
-   - graphql-codegen-documents
- config:
-   recursionLimit: 7
-```
-
-#### NOTE
-- This plugin is meant to run independently before other plugins that need to use `documents`.
+NOTE: This plugin is meant to run independently before other plugins that need to use `documents`.
 
 For example, in your `package.json` scripts, add:
 ```json
@@ -27,6 +17,30 @@ For example, in your `package.json` scripts, add:
 }
 ```
 
+and in your `your-graphql-codegen-documents-config-file`:
+```yml
+schema:
+  - path/to/schema.graphql
+documents:
+  - path/to/my-custom-documents.graphql
+generates:
+  path/to/generated-docs.graphql:
+    plugins:
+      - graphql-codegen-documents
+    config:
+      recursionLimit: 7
+```
+
+and then your other plugins
+```yml
+schema:
+  - path/to/schema.graphql
+documents:
+  - path/to/my-custom-documents.graphql
+  - path/to/generated-documents.graphql
+generates:
+  # Other plugins
+```
 
 ### TODO
 - Allow to use user defined documents.

@@ -1,6 +1,6 @@
 import { buildScalars, LoadedFragment, ParsedScalarsMap } from '@graphql-codegen/visitor-plugin-common';
 import * as autobind from 'auto-bind';
-import { FieldDefinitionNode, GraphQLSchema, InputValueDefinitionNode, ObjectTypeDefinitionNode, TypeNode, NamedTypeNode, InterfaceTypeDefinitionNode } from 'graphql';
+import { FieldDefinitionNode, GraphQLSchema, InputValueDefinitionNode, InterfaceTypeDefinitionNode, ObjectTypeDefinitionNode, TypeNode } from 'graphql';
 import { DocsGenPluginConfig } from '.';
 
 const TAB = '  ';
@@ -26,7 +26,9 @@ interface FieldType {
 
 type InterfaceName = string;
 
-export class DocsGenVisitor {
+type OperationType = 'query'|'mutation'|'subscription';
+
+export class DocumentsGeneratorVisitor {
   readonly recursionLimit: number;
   typeDefsMap: { [name: string]: FieldType[] };
   scalars: ParsedScalarsMap;
@@ -67,15 +69,35 @@ export class DocsGenVisitor {
     this.interfaceFieldsMap[node.name.value] = fields.map(field => field.name);
   }
 
-  generateDocuments(): string {
+  generateDocuments(params: {queries: string[]; mutations: string[]; subscriptions: string[]}): string {
     this.validateInterfaces();
-    const docsSettings = [
-      { key: 'Query', operationName: 'query' },
-      { key: 'Mutation', operationName: 'mutation' },
-      { key: 'subscription', operationName: 'subscription' }
+    const ignoredQueriesMap: {[name: string]: true} = {};
+    const ignoredMutationsMap: {[name: string]: true} = {};
+    const ignoredSubscriptionsMap: {[name: string]: true} = {};
+
+    params.queries.forEach(query => ignoredQueriesMap[query] = true);
+    params.mutations.forEach(mutation => ignoredMutationsMap[mutation] = true);
+    params.subscriptions.forEach(subscription => ignoredSubscriptionsMap[subscription] = true);
+
+    const docsSettings:  {key: string; operationType: OperationType}[] = [
+      { key: 'Query', operationType: 'query' },
+      { key: 'Mutation', operationType: 'mutation' },
+      { key: 'Subscription', operationType: 'subscription' }
     ];
-    const generate = (operations: any, operationType: string) => {
-      const results = operations.map(operation => {
+    const generate = (operations: FieldType[], operationType: OperationType) => {
+      const filteredOperations = (() => {
+        switch (operationType) {
+          case 'query':
+            return operations.filter(op => !ignoredQueriesMap[op.name]);
+          case 'mutation':
+              return operations.filter(op => !ignoredMutationsMap[op.name]);
+          case 'subscription':
+              return operations.filter(op => !ignoredSubscriptionsMap[op.name]);
+          default:
+            throw new Error('Unknown operation');
+        }
+      })();
+      const results = filteredOperations.map(operation => {
         const { codes, operationInputs } = this.formatFieldsAndGetInputs(operation);
         const argsString = this.formatInputStringForOperation(operationInputs);
         return this.wrapBlock(operationType, operation.name, argsString, codes);
@@ -84,8 +106,8 @@ export class DocsGenVisitor {
     };
     const generatedCode = docsSettings.map(setting => {
       const operations = this.typeDefsMap[setting.key];
-      if (!operations) { return; }
-      return generate(operations, setting.operationName);
+      if (!operations) { return ''; }
+      return generate(operations, setting.operationType);
     });
     return generatedCode.join('\n\n\n');
   }
