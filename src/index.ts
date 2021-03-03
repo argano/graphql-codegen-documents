@@ -30,7 +30,7 @@ export interface DocsGenPluginConfig extends RawTypesConfig {
 export const plugin: PluginFunction<DocsGenPluginConfig> = (schema: GraphQLSchema, documents: Types.DocumentFile[], config: DocsGenPluginConfig) => {
   const docAstNode = concatAST(
     documents.reduce((prev, v) => {
-      return [...prev, v.content];
+      return [...prev, v.document];
     }, [])
   );
   const printedSchema = printSchema(schema);
