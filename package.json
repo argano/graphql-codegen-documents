@@ -1,6 +1,6 @@
 {
   "name": "graphql-codegen-documents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "GraphQL Code Generator plugin for generating documents",
   "author": "Argano Inc.",
   "repository": "git@github.com:argano/graphql-codegen-documents.git",
