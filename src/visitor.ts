@@ -1,5 +1,5 @@
 import { buildScalars, LoadedFragment, ParsedScalarsMap } from '@graphql-codegen/visitor-plugin-common';
-import * as autobind from 'auto-bind';
+import * as autoBind from 'auto-bind';
 import { FieldDefinitionNode, GraphQLSchema, InputValueDefinitionNode, InterfaceTypeDefinitionNode, ObjectTypeDefinitionNode, TypeNode } from 'graphql';
 import { DocsGenPluginConfig } from '.';
 
@@ -41,7 +41,7 @@ export class DocumentsGeneratorVisitor {
     this.typeDefsMap = {};
     this.interfaceFieldsMap = {};
     this.interfaceImplementationsMap = {};
-    autobind(this as any);
+    autoBind(this as any);
   }
 
   ObjectTypeDefinition(def: ObjectTypeDefinitionNode) {

@@ -7,4 +7,4 @@ describe('graphql-codegen-documents', () => {
   it('should pass', async () => {
     expect(1);
   });
-})
+});
