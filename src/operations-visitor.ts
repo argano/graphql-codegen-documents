@@ -1,5 +1,5 @@
 import { LoadedFragment } from '@graphql-codegen/visitor-plugin-common';
-import * as autobind from 'auto-bind';
+import * as autoBind from 'auto-bind';
 import { GraphQLSchema, OperationDefinitionNode } from 'graphql';
 import { DocsGenPluginConfig } from '.';
 
@@ -12,7 +12,7 @@ export class OperationsVisitor {
     this.queries = [];
     this.mutations = [];
     this.subscriptions = [];
-    autobind(this as any);
+    autoBind(this as any);
   }
 
   OperationDefinition(node: OperationDefinitionNode) {

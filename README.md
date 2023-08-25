@@ -1,16 +1,18 @@
-## graphql-codegen-documents
+# graphql-codegen-documents
 
 GraphQL Code Generator plugin for generating documents.
 
-### Installation
+## Installation
+
 - with NPM `npm install --save graphql-codegen-documents`
 - with Yarn: `yarn add graphql-codegen-documents`
 
+## Usage
 
-### Usage
 NOTE: This plugin is meant to run independently before other plugins that need to use `documents`.
 
 For example, in your `package.json` scripts, add:
+
 ```json
 {
     "gen": "graphql-codegen -c {your-graphql-codegen-documents-config-file}.yaml && graphql-codegen"
@@ -18,6 +20,7 @@ For example, in your `package.json` scripts, add:
 ```
 
 and in your `your-graphql-codegen-documents-config-file`:
+
 ```yml
 schema:
   - path/to/schema.graphql
@@ -32,6 +35,7 @@ generates:
 ```
 
 and then your other plugins
+
 ```yml
 schema:
   - path/to/schema.graphql
@@ -42,8 +46,9 @@ generates:
   # Other plugins
 ```
 
-### TODO
+## TODO
+
 - Allow to use user defined documents.
-    - Currently all documents will be generated from scratch.
+  - Currently all documents will be generated from scratch.
 - Allow to use `directives` (https://www.apollographql.com/docs/graphql-tools/schema-directives/).
 - Add tests

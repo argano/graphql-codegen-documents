@@ -4,3 +4,4 @@ dist
 temp
 yarn-error.log
 junit.xml
+.npmrc
